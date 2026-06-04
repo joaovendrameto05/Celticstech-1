@@ -14,7 +14,7 @@
 
 O Celticstech foi desenvolvido para auxiliar associações agrícolas da região Nordeste no gerenciamento de cultivos e recomendações agrícolas.
 
-A aplicação permite cadastrar regiões, associações, agricultores, cultivos e recomendações, mantendo o relacionamento entre as entidades e facilitando a tomada de decisão.
+A aplicação permite cadastrar regiões, associações, agricultores, cultivos e recomendações, mantendo o relacionamento entre as entidades e facilitando a tomada de decisão. teste
 
 ---
 
