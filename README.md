@@ -2,338 +2,409 @@
 
 ## Sobre o Projeto
 
-O Celticstech é uma plataforma desenvolvida para auxiliar associações agrícolas da região Nordeste do Brasil no gerenciamento de cultivos e na geração automatizada de recomendações técnicas para produtores rurais.
+O **Celticstech** é uma plataforma desenvolvida para auxiliar associações agrícolas da região Nordeste do Brasil no gerenciamento de cultivos e na geração automatizada de recomendações técnicas para produtores rurais.
 
-A aplicação foi construída utilizando arquitetura moderna baseada em APIs REST, banco de dados relacional e infraestrutura em nuvem, seguindo rigorosas práticas de DevOps, Conteinerização e Cloud Computing.
+A solução foi projetada seguindo os princípios da **Cultura DevOps**, utilizando infraestrutura em nuvem, conteinerização, automação de deploy e persistência de dados para garantir:
 
-O objetivo principal é centralizar informações agrícolas e automatizar processos de tomada de decisão, permitindo maior eficiência operacional para associações e agricultores.
+* Escalabilidade
+* Alta disponibilidade
+* Segurança
+* Padronização de ambientes
+* Facilidade de manutenção
+* Entrega contínua
 
----
-
-## Objetivos
-
-* Centralizar informações agrícolas.
-* Gerenciar associações e regiões agrícolas.
-* Controlar cultivos cadastrados.
-* Automatizar recomendações técnicas com base no tipo de cultivo.
-* Garantir integridade dos dados através de restrições relacionais.
-* Aplicar conceitos de DevOps, Infraestrutura como Código (IaC) e Cloud Computing.
-* Disponibilizar uma API escalável, monitorável e segura.
+O projeto foi implantado em ambiente cloud utilizando recursos da Microsoft Azure e tecnologias modernas de desenvolvimento e infraestrutura.
 
 ---
 
-## Arquitetura da Solução
+# Sumário
 
-```plaintext
-┌─────────────────┐
-│     Swagger     │
-│  Interface Web  │
-└────────┬────────┘
-         │ HTTP (Porta 8080)
-         ▼
-┌─────────────────┐
-│ Celticstech API │
-│ ASP.NET Core 8  │
-└────────┬────────┘
-         │ EF Core (Porta 5432 Interna)
-         ▼
-┌─────────────────┐
-│ PostgreSQL 16   │
-│ Banco de Dados  │
-└─────────────────┘
-         ▲
-         │
-┌─────────────────┐
-│ Docker Compose  │
-│ Orquestração    │
-└─────────────────┘
-         ▲
-         │
-┌─────────────────┐
-│ Azure VM Linux  │
-│ Ubuntu 24.04    │
-└─────────────────┘
+* [Arquitetura da Solução](#arquitetura-da-solução)
+* [Tecnologias Utilizadas](#tecnologias-utilizadas)
+* [Infraestrutura Cloud](#infraestrutura-cloud)
+* [Práticas DevOps Implementadas](#práticas-devops-implementadas)
+* [Segurança da Aplicação](#segurança-da-aplicação)
+* [Persistência de Dados](#persistência-de-dados)
+* [Guia de Implantação](#guia-de-implantação)
+* [Auditoria do Ambiente](#auditoria-do-ambiente)
+* [Validação Funcional](#validação-funcional)
+* [Encerramento do Ambiente](#encerramento-do-ambiente)
+* [Equipe](#equipe)
+
+---
+
+# Arquitetura da Solução
+
+A arquitetura foi desenvolvida para executar integralmente em ambiente cloud, utilizando uma Máquina Virtual Linux hospedada na Microsoft Azure.
+
+A comunicação entre os componentes ocorre através de uma rede Docker privada, permitindo isolamento dos serviços e maior segurança operacional.
+
+```mermaid
+flowchart TD
+    classDef azure fill:#E6F0FA,stroke:#0078D4,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef vm fill:#F3F2F1,stroke:#605E5C,stroke-width:2px;
+    classDef api fill:#512BD4,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+    classDef db fill:#336791,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+    classDef volume fill:#FFB900,stroke:#000000,stroke-width:2px,color:#000000;
+    classDef user fill:#2B2B2B,stroke:#FFFFFF,stroke-width:2px,color:#FFFFFF;
+
+    User((Usuário / Swagger UI)):::user
+
+    subgraph AzureCloud ["Microsoft Azure Cloud (South Africa North)"]
+        subgraph VM ["Virtual Machine Ubuntu 24.04 LTS"]
+            PortaExposta(("Porta Externa 8080")):::user
+
+            subgraph DockerEnv ["Docker Engine"]
+                subgraph Network ["Rede Privada - celticstech-network"]
+                    API["Container API ASP.NET Core 8"]:::api
+                    DB[("Container PostgreSQL 16")]:::db
+                end
+
+                Vol[/"Volume Persistente postgres_data"/]:::volume
+            end
+        end
+    end
+
+    User --> PortaExposta
+    PortaExposta --> API
+    API --> DB
+    DB -.-> Vol
 ```
 
 ---
 
-## Tecnologias Utilizadas
+# Tecnologias Utilizadas
 
-### Backend
+## Backend
 
-* C#
-* .NET 8
-* ASP.NET Core Web API
+* ASP.NET Core 8
+* Entity Framework Core
+* Swagger/OpenAPI
 
-### Persistência de Dados
+## Banco de Dados
 
-* Entity Framework Core (ORM)
 * PostgreSQL 16
 
-### Infraestrutura e DevOps
+## Conteinerização
 
-* Docker e Docker Compose
-* Linux Ubuntu 24.04
-* Microsoft Azure Virtual Machine (Azure CLI)
+* Docker
+* Docker Compose
 
-### Ferramentas e Versionamento
+## Cloud Computing
 
-* Git e GitHub
-* Swagger OpenAPI
+* Microsoft Azure
+* Azure CLI
 
----
+## Sistema Operacional
 
-## Práticas DevOps Aplicadas
+* Ubuntu Server 24.04 LTS
 
-### 1. Conteinerização e Padronização
+## Controle de Versão
 
-Toda a aplicação foi encapsulada utilizando Docker, garantindo portabilidade, isolamento de recursos, reprodutibilidade exata do ambiente de desenvolvimento em produção e facilidade de implantação.
-
-### 2. Multi-Stage Build
-
-O Dockerfile utiliza a estratégia de múltiplos estágios para otimização da imagem:
-
-**Build Stage:** Responsável por restaurar dependências, compilar o código-fonte e publicar os artefatos otimizados.
-
-**Runtime Stage:** Contém apenas o ambiente de execução mínimo necessário do .NET, reduzindo drasticamente o tamanho da imagem, economizando recursos de rede e diminuindo a superfície de ataque.
-
-### 3. Execução com Usuário Não Privilegiado (Segurança)
-
-Por padrão, contêineres rodam como root, o que é um risco severo de segurança. O nosso Dockerfile possui a instrução `USER app`, forçando a aplicação a executar sob um usuário restrito e não privilegiado criado especificamente para o ambiente de runtime do ASP.NET.
-
-### 4. Rede Privada Docker
-
-Foi criada uma rede exclusiva (`celticstech-network`).
-
-Essa rede garante que o PostgreSQL não fique exposto externamente (à internet), permitindo que apenas o contêiner da API tenha acesso ao banco de dados, estabelecendo uma comunicação interna e segura.
-
-### 5. Persistência de Dados (Volumes Nomeados)
-
-Os dados são armazenados em um volume Docker nomeado (`postgres_data`).
-
-Isso garante que os registros persistam mesmo após a reinicialização, atualização ou destruição do contêiner do banco de dados, facilitando também rotinas de backup e disaster recovery.
-
-### 6. Estratégia de Resiliência (Race Condition Mitigation)
-
-Para evitar falhas na aplicação das migrações do Entity Framework (onde a API inicia antes do PostgreSQL estar pronto para aceitar conexões), foi implementado um mecanismo de espera programada (Delay) no startup da aplicação.
-
-Isso garante que o banco de dados esteja totalmente operante antes da criação automática das tabelas.
+* Git
+* GitHub
 
 ---
 
-## Provisionamento da Infraestrutura Azure (IaC)
+# Infraestrutura Cloud
 
-A infraestrutura foi provisionada via linha de comando para garantir rastreabilidade.
+A infraestrutura foi provisionada em ambiente Microsoft Azure utilizando linha de comando através do Azure CLI.
 
-### Criação do Resource Group
+### Recursos Provisionados
+
+| Recurso             | Descrição                 |
+| ------------------- | ------------------------- |
+| Virtual Machine     | Hospedagem da aplicação   |
+| Ubuntu 24.04 LTS    | Sistema operacional       |
+| Docker Engine       | Execução dos containers   |
+| Docker Compose      | Orquestração dos serviços |
+| PostgreSQL          | Persistência de dados     |
+| Rede Virtual Docker | Comunicação interna       |
+
+---
+
+# Práticas DevOps Implementadas
+
+## Infraestrutura como Código (IaC)
+
+Provisionamento dos recursos cloud através do Azure CLI.
+
+## Conteinerização
+
+Empacotamento da aplicação utilizando Docker para garantir consistência entre ambientes.
+
+## Orquestração
+
+Gerenciamento dos serviços através do Docker Compose.
+
+## Automação de Deploy
+
+Construção automática das imagens durante o processo de implantação.
+
+## Ambientes Reproduzíveis
+
+Toda a aplicação pode ser reconstruída utilizando apenas os arquivos presentes neste repositório.
+
+---
+
+# Segurança da Aplicação
+
+## Multi-Stage Build
+
+O Dockerfile utiliza múltiplos estágios para separar compilação e execução.
+
+Benefícios:
+
+* Redução do tamanho da imagem
+* Menor superfície de ataque
+* Remoção de artefatos desnecessários
+
+## Execução Rootless
+
+A aplicação executa utilizando um usuário não privilegiado.
 
 ```bash
-az group create --name Celticstech-GS --location southafricanorth
+whoami
+app
 ```
 
-### Criação da Máquina Virtual (Ubuntu 24.04)
+Benefícios:
 
-```bash
-az vm create \
-  --resource-group Celticstech-GS \
-  --name vm-celticstech \
-  --image Ubuntu2404 \
-  --admin-username celticsadmin \
-  --generate-ssh-keys \
-  --public-ip-sku Standard
+* Redução de riscos de escalonamento de privilégios
+* Maior proteção contra comprometimento do container
+
+## Isolamento de Rede
+
+O banco PostgreSQL não possui portas expostas para acesso externo.
+
+Toda comunicação ocorre exclusivamente pela rede interna:
+
+```text
+celticstech-network
 ```
 
 ---
 
-## Deploy da Aplicação (How-To)
+# Persistência de Dados
 
-### 1. Acesso à Máquina Virtual via SSH
+A persistência é garantida através do volume Docker:
 
-```bash
-ssh celticsadmin@<IP_PUBLICO_DA_VM>
+```text
+postgres_data
 ```
 
-### 2. Configuração do Ambiente (Instalação do Docker)
+Dessa forma os dados permanecem armazenados mesmo após:
+
+* Reinicialização dos containers
+* Atualizações da aplicação
+* Recriação dos serviços
+* Falhas operacionais
+
+---
+
+# Guia de Implantação
+
+## 1. Conectar na Máquina Virtual
 
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install docker.io docker-compose -y
-sudo systemctl start docker
+ssh celticsadmin@20.87.243.184
 ```
 
-### 3. Clonagem do Projeto
+## 2. Clonar o Repositório
 
 ```bash
-git clone https://github.com/joaovendrameto05/Celticstech.git
-cd Celticstech
+git clone https://github.com/joaovendrameto05/Celticstech-1.git
+
+cd Celticstech-1
 ```
 
-### 4. Construção e Inicialização em Background
-
-É imperativo o uso da flag `-d` para que a aplicação rode como serviço (segundo plano), liberando o terminal.
+## 3. Executar a Aplicação
 
 ```bash
 sudo docker-compose up --build -d
 ```
 
-### 5. Verificação do Status dos Contêineres
+## 4. Validar Containers
 
 ```bash
 sudo docker ps
 ```
 
-**Saída esperada:** Os contêineres `celticstech-api-561450` e `postgres-db-561450` devem constar com o status `Up`.
+Resultado esperado:
+
+```text
+celticstech-api-561450
+postgres-db-561450
+```
 
 ---
 
-## Auditoria e Monitoramento
+# Auditoria do Ambiente
 
-Parte fundamental do processo DevOps é a auditoria e análise de comportamento dos contêineres em execução.
-
-### Monitoramento de Logs (Background)
+## Verificar Logs da API
 
 ```bash
 sudo docker logs celticstech-api-561450
+```
+
+## Verificar Logs do Banco
+
+```bash
 sudo docker logs postgres-db-561450
 ```
 
-### Auditoria do Contêiner da API (.NET)
-
-Acesso interativo para comprovar o diretório de trabalho e o usuário não privilegiado:
+## Inspecionar o Container da API
 
 ```bash
 sudo docker exec -it celticstech-api-561450 bash
-
-pwd       # Saída esperada: /app
-ls -l     # Exibe os binários compilados (Celticstech.dll)
-whoami    # Saída esperada: app
-
-exit
 ```
 
-### Auditoria do Contêiner do Banco de Dados (PostgreSQL)
+Dentro do container:
 
 ```bash
-sudo docker exec -it postgres-db-561450 bash
-
-pwd       # Saída esperada: /
-whoami    # Saída esperada: postgres
-
-exit
+pwd
+ls -l
+whoami
 ```
 
----
-
-## Testes da API (CRUD Completo via Swagger)
-
-A documentação interativa está disponível na raiz da aplicação.
-
-Acesse pelo navegador:
+Validações esperadas:
 
 ```text
-http://<IP_PUBLICO_DA_VM>:8080
+/app
 ```
 
-A ordem de inserção (POST) deve respeitar a integridade referencial do banco de dados na seguinte sequência:
-
-### 1. Criar Região (POST /api/Regioes)
-
-```json
-{
-  "nomeRegiao": "Nordeste",
-  "ufRegiao": "NE"
-}
-```
-
-### 2. Criar Associação (POST /api/Associacoes)
-
-Depende do ID da Região criada no passo anterior.
-
-```json
-{
-  "nomeAssociacao": "Agro Forte Brasil",
-  "siglaAssociacao": "AGF",
-  "idRegiao": 1,
-  "cnpj": "12345678901234",
-  "login": "agroadmin",
-  "senha": "senhaSegura123"
-}
-```
-
-### 3. Criar Cultivo (POST /api/Cultivos)
-
-**Regra de Negócio:** O atributo `porteCultivo` aceita APENAS os valores `ARBUSTO`, `RAIZ`, `ARVORE` ou `HORTALICA`.
-
-```json
-{
-  "nomeCultivo": "Milho Premium",
-  "categoriaCultivo": "Cereal",
-  "porteCultivo": "ARBUSTO",
-  "tempoColheita": "90 dias",
-  "vidaUtil": "1 ano",
-  "intermitencia": "Sazonal"
-}
-```
-
-### 4. Criar Recomendação (POST /api/Recomendacoes)
-
-Depende do ID da Associação e do ID do Cultivo. A API processará automaticamente o tipo e a orientação.
-
-```json
-{
-  "dataRecAsc": "2026-06-04T10:00:00Z",
-  "idAssociacao": 1,
-  "idCultivo": 1
-}
+```text
+app
 ```
 
 ---
 
-## Validação Direta de Persistência (Banco de Dados)
+# Validação Funcional
 
-Para comprovar que o sistema está persistindo os dados fisicamente no banco conteinerizado, execute os comandos SQL diretamente dentro do contêiner do PostgreSQL:
+## Swagger
 
-```bash
-# Acessar o banco de dados interno
-sudo docker exec -it postgres-db-561450 psql -U postgres -d CelticstechDb
+A aplicação pode ser acessada através do endereço:
+
+```text
+http://20.87.243.184:8080
 ```
 
-Execute as consultas abaixo (as aspas duplas são obrigatórias na estrutura gerada pelo EF Core):
+---
+
+## CREATE
+
+Criar registros utilizando:
+
+```http
+POST /api/Regioes
+POST /api/Cultivos
+```
+
+Validar no PostgreSQL:
 
 ```sql
 SELECT * FROM "Regioes";
-SELECT * FROM "Associacoes";
 SELECT * FROM "Cultivos";
-SELECT * FROM "Recomendacoes";
 ```
 
-Para sair do terminal do PostgreSQL, digite `\q` e pressione Enter.
+---
+
+## READ
+
+Consultar registros:
+
+```http
+GET /api/Regioes
+GET /api/Cultivos
+```
 
 ---
 
-## Escalabilidade
+## UPDATE
 
-A arquitetura atual, por ser baseada em contêineres Docker isolados, permite expansão futura de forma nativa e aderente às tecnologias em nuvem, pavimentando o caminho para adoção de:
+Atualizar informações:
 
-* Azure Container Apps ou Azure Kubernetes Service (AKS) para orquestração em larga escala.
-* Azure Database for PostgreSQL (PaaS) para alta disponibilidade do banco de dados.
-* Esteiras de CI/CD automatizadas via GitHub Actions.
-* Monitoramento de telemetria utilizando Azure Monitor e Application Insights.
+```http
+PUT /api/Cultivos/{id}
+```
 
----
+Validar:
 
-## Integrantes do Projeto
-
-| Nome                           | RM        | Turma  |
-| ------------------------------ | --------- | ------ |
-| João Victor Vendrameto         | RM 563665 | 2TDSPV |
-| Nicolas de Oliveira Jacob      | RM 564205 | 2TDSPX |
-| Gabriel Ambrósio Saraiva       | RM 566552 | 2TDSPV |
-| Vinicius Romaguera Cardozo     | RM 562308 | 2TDSPX |
-| Yuri Fuzinatto Garzoli Barreto | RM 561450 | 2TDSPX |
+```sql
+SELECT * FROM "Cultivos";
+```
 
 ---
 
-## Projeto Acadêmico
+## DELETE
 
-Projeto desenvolvido para a disciplina de DevOps, Cloud Computing e Infraestrutura em Nuvem, aplicando e validando os conceitos de Infraestrutura como Código, Conteinerização, Redes Docker, Volumes, e Boas Práticas de Segurança em implantações de Produção.
+Remover registros:
+
+```http
+DELETE /api/Cultivos/{id}
+```
+
+Validar:
+
+```sql
+SELECT * FROM "Cultivos";
+```
+
+---
+
+# Acesso ao PostgreSQL
+
+```bash
+sudo docker exec -it postgres-db-561450 \
+psql -U postgres -d CelticstechDb
+```
+
+Para sair:
+
+```sql
+\q
+```
+
+---
+
+# Encerramento do Ambiente
+
+Paralisar todos os serviços:
+
+```bash
+sudo docker-compose down -v
+```
+
+Encerrar sessão SSH:
+
+```bash
+exit
+```
+
+---
+
+# Equipe
+
+| Nome                           | RM       | Turma  |
+| ------------------------------ | -------- | ------ |
+| João Victor Vendrameto         | RM563665 | 2TDSPV |
+| Nicolas de Oliveira Jacob      | RM564205 | 2TDSPX |
+| Gabriel Ambrósio Saraiva       | RM566552 | 2TDSPV |
+| Vinicius Romaguera Cardozo     | RM562308 | 2TDSPX |
+| Yuri Fuzinatto Garzoli Barreto | RM561450 | 2TDSPX |
+
+---
+
+# Considerações Finais
+
+Este projeto foi desenvolvido como atividade integradora das disciplinas de **DevOps Tools** e **Cloud Computing**, contemplando conceitos de:
+
+* Infraestrutura em Nuvem
+* Conteinerização
+* Orquestração de Serviços
+* Persistência de Dados
+* Segurança de Containers
+* Automação de Deploy
+* Cultura DevOps
+
+Toda a infraestrutura foi provisionada, implantada e validada em ambiente Microsoft Azure, seguindo boas práticas de arquitetura moderna para aplicações distribuídas.
